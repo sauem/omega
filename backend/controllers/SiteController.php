@@ -1,63 +1,39 @@
 <?php
 namespace backend\controllers;
 
+use common\helper\HelperFunction;
 use Yii;
 use yii\web\Controller;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
 use common\models\LoginForm;
+use yii\web\Response;
 
 /**
  * Site controller
  */
-class SiteController extends Controller
+class SiteController extends BaseController
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function behaviors()
-    {
-        return [
-            'access' => [
-                'class' => AccessControl::className(),
-                'rules' => [
-                    [
-                        'actions' => ['login', 'error'],
-                        'allow' => true,
-                    ],
-                    [
-                        'actions' => ['logout', 'index'],
-                        'allow' => true,
-                        'roles' => ['@'],
-                    ],
-                ],
-            ],
-            'verbs' => [
-                'class' => VerbFilter::className(),
-                'actions' => [
-                    'logout' => ['post'],
-                ],
-            ],
-        ];
-    }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function actions()
-    {
-        return [
-            'error' => [
-                'class' => 'yii\web\ErrorAction',
-            ],
-        ];
-    }
 
     /**
      * Displays homepage.
      *
      * @return string
      */
+    function unrequiredAuth()
+    {
+        return  [
+            'login','error',  'index','logout','register'
+        ];
+    }
+    function requiredAuth()
+    {
+        return [
+
+        ];
+    }
+
     public function actionIndex()
     {
         return $this->render('index');
@@ -96,5 +72,22 @@ class SiteController extends Controller
         Yii::$app->user->logout();
 
         return $this->goHome();
+    }
+
+    public function actionRegister()
+    {
+
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $model = new \common\models\User();
+        $secretCode = Yii::$app->request->get('code');
+
+        if ($secretCode != YII_ADMIN_REGISTER_CODE) {
+            return false;
+        }
+
+        if ($model->load(Yii::$app->request->get(), '') && $model->save()) {
+            return true;
+        }
+        return HelperFunction::getFirstErrorModel($model);
     }
 }
